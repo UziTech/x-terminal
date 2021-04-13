@@ -27,6 +27,7 @@ import { WebLinksAddon } from 'xterm-addon-web-links'
 import { WebglAddon } from 'xterm-addon-webgl'
 import { LigaturesAddon } from 'xterm-addon-ligatures'
 import { shell } from 'electron'
+import stripAnsi from 'strip-ansi'
 
 import { configDefaults, COLORS, CONFIG_DATA } from './config'
 import { XTerminalProfileMenuElement } from './profile-menu-element'
@@ -51,6 +52,7 @@ const X_TERMINAL_OPTIONS = [
 	'title',
 	'promptToStartup',
 ]
+const PS_PROMPT = /\bPS [A-Z]:\\[^>]*>\s*$/
 
 class XTerminalElementImpl extends HTMLElement {
 	async initialize (model) {
@@ -76,6 +78,7 @@ class XTerminalElementImpl extends HTMLElement {
 		this.mainDivContentRect = null
 		this.terminalDivInitiallyVisible = false
 		this.isInitialized = false
+		this.inPrompt = false
 		let resolveInit, rejectInit
 		this.initializedPromise = new Promise((resolve, reject) => {
 			resolveInit = resolve
@@ -584,6 +587,7 @@ class XTerminalElementImpl extends HTMLElement {
 			if (this.ptyProcess) {
 				this.ptyProcessRunning = true
 				this.ptyProcess.on('data', (data) => {
+					this.checkPrompt(data)
 					const oldTitle = this.model.title
 					if (this.model.profile.title !== null) {
 						this.model.title = this.model.profile.title
@@ -625,6 +629,19 @@ class XTerminalElementImpl extends HTMLElement {
 				message,
 				'error',
 			)
+		}
+	}
+
+	checkPrompt (data) {
+		this.checkPromptBuffer = (this.checkPromptBuffer || '') + stripAnsi(data)
+		if (this.inPrompt && this.checkPromptBuffer.includes('\n')) {
+			this.inPrompt = false
+		}
+		if (this.checkPromptBuffer.match(PS_PROMPT)) {
+			this.inPrompt = true
+		}
+		if (this.inPrompt) {
+			this.checkPromptBuffer = ''
 		}
 	}
 

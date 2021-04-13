@@ -485,7 +485,7 @@ class XTerminalSingleton {
 			terminal = this.getActiveTerminal()
 		}
 
-		if (!terminal) {
+		if (!terminal || !terminal.isInPrompt()) {
 			const options = this.addDefaultPosition()
 			terminal = await this.open(
 				XTerminalProfilesSingleton.instance.generateNewUri(),

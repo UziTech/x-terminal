@@ -260,6 +260,10 @@ class XTerminalModel {
 		return this.activeIndex === 0 && (atom.config.get('x-terminal.terminalSettings.allowHiddenToStayActive') || this.isVisible())
 	}
 
+	isInPrompt () {
+		return !!this.element.inPrompt
+	}
+
 	setNewPane (pane) {
 		this.pane = pane
 		const location = this.pane.getContainer().getLocation()
